@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Mexican Los Angeles | Digital Archive</title>
+
+  <!-- JSON-LD dataset pointer (references the GeoJSON in /data) -->
+  <script type="application/ld+json" id="dataset-jsonld">
+  {
+    "@context": "https://schema.org",
+    "@type": "Dataset",
+    "name": "Mexican Los Angeles Archive",
+    "description": "Digitized records, oral histories, and curated materials documenting Mexican-American life in Los Angeles County from 1771 to 2024.",
+    "creator": { "@type": "Person", "name": "Mia Arambula" },
+    "distribution": [{ "@type": "DataDownload", "contentUrl": "data/la_mexican_history.geojson", "encodingFormat": "application/geo+json" }]
+  }
+  </script>
+
+  <link rel="stylesheet" href="vendor/leaflet/leaflet.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Libre+Baskerville:wght@400;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/mexistyle.css" />
+</head>
+<body>
+
+  <div class="layout-grid">
+    <div class="interface-column">
+      <header class="site-hero" role="banner">
+        <div class="hero-text">
+          <p class="hero-eyebrow">Mexican Los Angeles</p>
+          <h1 class="hero-title">Digital Archive Console</h1>
+          <p class="hero-lede">A clean, modern atlas of Mexican Los Angeles—designed for fast searching, focused browsing, and editorial clarity.</p>
+        </div>
+        <div class="hero-actions">
+          <a class="hero-button primary" href="#map">Explore archive</a>
+          <button class="hero-button ghost" type="button" id="about-trigger" aria-controls="about-drawer" aria-expanded="false">About the project</button>
+        </div>
+      </header>
+
+      <section class="about-drawer" id="about-drawer" aria-hidden="true" aria-label="About the project">
+        <div class="drawer-inner">
+          <div class="drawer-ascii">
+            <div class="ascii-art" id="ascii-art" aria-hidden="true"></div>
+          </div>
+          <div class="drawer-copy">
+            <h2>Project Notes</h2>
+            <p>This archive is dedicated to my father and to the young Mexican-American children in Los Angeles who, like me, were never handed a full picture of themselves. My father was born in Mexico and came to L.A. chasing the dream we all recognize; when he died, the clearest doorway to my Mexican-ness went with him. Later, spiraling through the Internet Archive, I started finding these early community-made manuals and curricula from the ’80s and ’90s — things teachers and organizers put together specifically for Mexican-American kids. I had never seen this in middle school or high school. It made me wonder why nothing like that exists now, in a time when we live online, and what it would look like to translate that care into a digital, searchable, map-based form. So I started building it myself.</p>
+            <p>What you’re seeing here is an early map — a first pass at gathering the sites, stories, and traces of Mexican and Chicanx life in L.A., the parts that get built, erased, and fought for. It will grow as I learn more. If you know of places, people, or histories that should live here too, please tell me at <a href="mailto:miaarambula321@gmail.com">miaarambula321@gmail.com</a></p>
+            <p class="drawer-meta">Research by Mia Arambula • Los Angeles, California • 2025</p>
+          </div>
+          <button class="drawer-close" type="button" id="about-close" aria-label="Close about panel">Close</button>
+        </div>
+      </section>
+
+      <aside class="control-panel" id="control-panel" role="complementary" aria-label="Archive console">
+        <div class="control-brand">
+          <div class="brand-mark">MLA</div>
+          <div>
+            <div class="brand-eyebrow">Mexican Los Angeles</div>
+            <h1 class="archive-title">Archive Console</h1>
+            <p class="brand-caption">Data &amp; field notes, 1771—2024</p>
+          </div>
+        </div>
+
+        <nav class="primary-nav" aria-label="Primary navigation">
+          <button id="btn-archive" class="control-button active" type="button">Archive</button>
+          <button id="btn-reference" class="control-button" type="button">Reference</button>
+        </nav>
+
+        <div class="clock-panel" aria-live="polite">
+          <div class="clock-visual" aria-hidden="true">
+            <span class="clock-eagle"></span>
+            <div class="clock-face">
+              <span class="clock-hand clock-hand--hour"></span>
+              <span class="clock-hand clock-hand--minute"></span>
+              <span class="clock-hand clock-hand--second"></span>
+            </div>
+            <span class="clock-time" id="current-time">--:--</span>
+          </div>
+          <div class="clock-info">
+            <div class="clock-label">Los Angeles</div>
+            <div class="clock-date" id="current-date">Pacific Time</div>
+          </div>
+        </div>
+
+      </aside>
+
+    </div>
+
+    <main class="main-container" id="main-container" role="main">
+
+      <section class="map-container" aria-label="Map">
+        <div class="map-search-overlay" role="search" aria-label="Search dataset">
+          <span class="map-search-icon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="7"></circle>
+              <path d="M16.5 16.5L21 21"></path>
+            </svg>
+          </span>
+          <div class="map-search-body">
+            <label class="map-search-label" for="search-input">Search dataset</label>
+            <input type="search" class="search-input map-search-input" id="search-input" placeholder="Sites, people, neighborhoods..." aria-label="Search archive" />
+          </div>
+        </div>
+        <div id="map" style="width:100%;height:100%; position:relative;"></div>
+        <!-- SVG Grid Overlay for Editorial Look -->
+        <svg id="map-grid-overlay" width="100%" height="100%" style="position:absolute;top:0;left:0;pointer-events:none;z-index:10;" aria-hidden="true"></svg>
+      </section>
+
+    </main>
+    <section class="bottom-panel" aria-label="Results and details">
+      <header class="insight-header">
+        <div>
+          <p class="insight-eyebrow">Live dataset</p>
+          <h2 class="insight-title">Mexican Los Angeles</h2>
+          <p class="insight-caption">Search, filter, and inspect locations captured across the archive.</p>
+        </div>
+        <div class="rail-actions" aria-label="Reference tools">
+          <button id="btn-materials" class="control-button rail-button" type="button">Materials</button>
+          <button id="btn-radio" class="control-button rail-button" type="button">Radio</button>
+        </div>
+      </header>
+
+      <div class="list-header">
+        <div class="list-title">Locations</div>
+        <div class="list-count" id="list-count">0 results</div>
+      </div>
+
+      <div class="locations-list" id="locations-list" aria-live="polite"></div>
+      <div class="details-panel" id="details-panel">
+        <div class="details-empty data-card"><h3>Select a Location</h3><p>Choose a location from the map or list to view detailed historical information.</p></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- About modal -->
+  <div class="modal-panel" id="about-modal" aria-hidden="true" role="dialog" aria-label="About">
+    <div class="modal-content">
+      <div class="modal-header"><div class="modal-title">About Mexican Los Angeles Archive</div><button class="modal-close" data-close="about-modal" aria-label="Close">×</button></div>
+      <div style="line-height:1.6;">
+        <p><strong>Mexican Los Angeles Archive</strong> is a comprehensive digital collection documenting the Mexican-American experience in Los Angeles County from 1771 to the present day.</p>
+        <h3 style="margin-top:24px; margin-bottom:12px;">Research Methodology</h3>
+        <p>This archive combines historical records, oral histories, maps, and multimedia materials to create an interconnected narrative of Mexican Los Angeles. Materials are sourced from libraries, archives, community organizations, and personal collections.</p>
+        <h3 style="margin-top:24px; margin-bottom:12px;">Credits</h3>
+        <p><strong>Research & Curation:</strong> Mia Arambula<br><strong>Community Partners:</strong> LA Libraries, Chicano Studies Research Center</p>
+        <h3 style="margin-top:24px; margin-bottom:12px;">Contact</h3>
+        <p>For questions, contributions, or permissions, please contact the research team through the university archives.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Materials modal -->
+  <div class="modal-panel" id="materials-modal" aria-hidden="true" role="dialog" aria-label="Materials">
+    <div class="modal-content">
+      <div class="modal-header"><div class="modal-title">Internet Archive Materials</div><button class="modal-close" data-close="materials-modal" aria-label="Close">×</button></div>
+      <div id="materials-content"><p style="color:var(--text-muted); margin-bottom:20px;">Loading Chicano materials from Internet Archive...</p></div>
+    </div>
+  </div>
+
+  <!-- Radio player -->
+  <div class="radio-player hidden" id="radio-player" aria-hidden="true" role="region" aria-label="Radio player">
+    <div class="radio-header">
+      <div>
+        <div class="radio-title">Chicano Radio 24/7</div>
+        <div class="radio-subtitle">Curated by Mia Arambula</div>
+      </div>
+      <button class="radio-close" data-toggle-radio aria-label="Close">×</button>
+    </div>
+    <div class="radio-info">
+      <div class="radio-station" id="radio-station">“Como la Flor” w/ Jazmin</div>
+      <div class="radio-status" id="radio-status">SoundCloud stream</div>
+    </div>
+    <div class="radio-embed-wrap">
+      <iframe
+        title="SoundCloud player"
+        class="radio-embed"
+        scrolling="no"
+        frameborder="no"
+        allow="autoplay"
+        src="https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/user-643553014/como-la-flor-w-jazmin-020625&color=%2310131a&auto_play=false&hide_related=false&show_comments=false&show_user=false&show_reposts=false&show_teaser=false">
+      </iframe>
+    </div>
+    <a class="radio-link" href="https://soundcloud.com/user-643553014/como-la-flor-w-jazmin-020625" target="_blank" rel="noopener noreferrer">
+      Open full track on SoundCloud
+    </a>
+  </div>
+
+  <!-- Laptop modal / record viewer -->
+  <div class="laptop-modal" id="laptop-modal" aria-hidden="true" role="dialog" aria-label="Record viewer">
+    <div class="laptop-container">
+      <button class="close-laptop" data-close-laptop aria-label="Close">×</button>
+      <div class="laptop-screen">
+        <div class="laptop-header">
+          <div class="window-controls"><div class="control-btn close-btn" data-close-laptop></div><div class="control-btn minimize-btn"></div><div class="control-btn maximize-btn"></div></div>
+          <div class="window-title">MEXICAN_LOS_ANGELES_ARCHIVE.exe</div>
+        </div>
+        <div class="laptop-content" id="laptop-content"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Load libraries then app (defer order) -->
+  <script src="vendor/leaflet/leaflet.js" defer></script>
+  <script src="scripts/mirador-facets.js" defer></script>
+  <script src="mexiscript.js" defer></script>
+
+</body>
+</html>
